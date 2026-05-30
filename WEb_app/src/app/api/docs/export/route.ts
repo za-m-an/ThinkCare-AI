@@ -469,6 +469,6 @@ export async function GET() {
     });
   } catch (error: any) {
     console.error("PDF Documentation Export failed:", error);
-    return NextResponse.json({ error: "Export failed." }, { status: 500 });
+    return NextResponse.json({ error: "Export failed.", details: error.message || String(error), stack: error.stack || "" }, { status: 500 });
   }
 }

@@ -224,9 +224,9 @@ export async function GET() {
       });
 
       // Register fonts
-      const fontRegularPath = path.join(process.cwd(), "src/assets/fonts/GoogleSans-Regular.ttf");
-      const fontBoldPath = path.join(process.cwd(), "src/assets/fonts/GoogleSans-Bold.ttf");
-      const fontItalicPath = path.join(process.cwd(), "src/assets/fonts/GoogleSans-Italic.ttf");
+      const fontRegularPath = path.join(process.cwd(), "public/fonts/GoogleSans-Regular.ttf");
+      const fontBoldPath = path.join(process.cwd(), "public/fonts/GoogleSans-Bold.ttf");
+      const fontItalicPath = path.join(process.cwd(), "public/fonts/GoogleSans-Italic.ttf");
 
       doc.registerFont("Google Sans", fontRegularPath);
       doc.registerFont("Google Sans-Bold", fontBoldPath);

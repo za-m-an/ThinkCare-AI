@@ -1,0 +1,7 @@
+# Ignore large binary weights
+model.safetensors
+model.safetensors.metadata
+.cache/
+.ipynb_checkpoints/
+__pycache__/
+*.pyc

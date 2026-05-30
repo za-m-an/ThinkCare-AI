@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 Int              @id @default(autoincrement())
+  email              String           @unique
+  fullName           String
+  passwordHash       String
+  role               String           @default("USER") // "USER" or "ADMIN"
+  createdAt          DateTime         @default(now())
+  isOnboarded        Boolean          @default(false)
+  patientId          String?          @unique // e.g. "TC-8492-AX"
+  onboarding         Onboarding?
+  assessments        AssessmentLog[]
+  twoFactorEnabled   Boolean          @default(true)
+  emailAlerts        Boolean          @default(true)
+  criticalTriggers   Boolean          @default(true)
+  systemLogs         Boolean          @default(false)
+  chatSessions       ChatSession[]
+}
+
+model Onboarding {
+  id                     Int      @id @default(autoincrement())
+  userId                 Int      @unique
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName              String
+  lastName               String
+  dob                    DateTime
+  sexAtBirth             String
+  bloodType              String?
+  height                 Float
+  weight                 Float
+  heartRate              Float?
+  bloodPressureSystolic  Float?
+  bloodPressureDiastolic Float?
+  spO2                   Float?
+  avgSleepHours          Float    @default(7.0)
+  fastFoodMealsPerWeek   Float    @default(2.0)
+  waterCupsPerDay        Float    @default(8.0)
+  dailySteps             Float    @default(5000.0)
+  stressLevel            Float    @default(3.0)
+  smokingPacksPerWeek    Float    @default(0.0)
+  alcoholDrinksPerWeek   Float    @default(0.0)
+  conditions             String[] @default([])
+  medications            String?
+  allergies              String?
+  updatedAt              DateTime @updatedAt
+}
+
+model AssessmentLog {
+  id                 Int      @id @default(autoincrement())
+  userId             Int
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  requestId          String   @unique // e.g. "req_948a2b"
+  modelType          String   // e.g. "DermDiag-v4"
+  confidence         Float
+  latency            Float
+  status             String   // "SUCCESS", "WARNING", "FAILED"
+  inputPrompt        String   @db.Text
+  predictedCondition String
+  createdAt          DateTime @default(now())
+}
+
+model SystemConfig {
+  key   String @id
+  value String
+}
+
+model ChatSession {
+  id        Int           @id @default(autoincrement())
+  uuid      String        @unique @default(uuid())
+  userId    Int
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String        @default("New Assessment")
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  messages  ChatMessage[]
+}
+
+model ChatMessage {
+  id        Int         @id @default(autoincrement())
+  sessionId Int
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sender    String      // "user" or "ai"
+  text      String      @db.Text
+  createdAt DateTime    @default(now())
+}
+
+// /docs module: visibility + scheduling
+model DocsConfig {
+  id        Int      @id @default(autoincrement())
+  isEnabled Boolean  @default(false)
+  startDate DateTime @default(now())
+  endDate   DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  updatedBy String   @default("system")
+}
+
+// /docs module: editable content per section
+model DocsContent {
+  id        Int      @id @default(autoincrement())
+  section   String   @unique // e.g. "problem", "team", "architecture"
+  content   String   @db.Text // JSON string
+  updatedAt DateTime @updatedAt
+}

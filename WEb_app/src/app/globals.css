@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #9cbbf8;
+  --color-primary-hover: #82a5f5;
+  --color-secondary-container: #00b86b;
+  --color-surface-container: #181c2a;
+  --color-error: #f87171;
+  --color-bg-dark: #0c101b;
+  --color-bg-card: #131824;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #9cbbf8;
+  --color-text-muted: #64748b;
+  --color-border-dark: #1e293b;
+  --font-sans: var(--font-google-sans), 'Noto Sans Bengali', system-ui, -apple-system, sans-serif;
+  --font-hanken: var(--font-google-sans), 'Noto Sans Bengali', system-ui, -apple-system, sans-serif;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-google-sans), system-ui, sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0c101b;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+

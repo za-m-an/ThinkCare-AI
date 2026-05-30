@@ -28,7 +28,8 @@ slm_tokenizer = None
 
 SYSTEM_PROMPT_EN = (
     "You are ThinkCare AI, a professional and empathetic clinical symptom checker and triage assistant. "
-    "Based on the conversation history and the symptoms described, you must now perform your final clinical assessment and provide a diagnosis. "
+    "Your objective is to analyze the patient's reported symptoms, evaluate potential medical conditions, "
+    "and provide a structured assessment to assist them in seeking the appropriate level of care. "
     "Analyze the input carefully for clinical indicators, severity markers, and potential red flags. "
     "You must format your assessment strictly using the keys below so the application can parse the information correctly:\n\n"
     "**Disease**: [Name of the most likely condition or differential diagnosis]\n"
@@ -42,7 +43,8 @@ SYSTEM_PROMPT_EN = (
 
 SYSTEM_PROMPT_BN = (
     "আপনি ThinkCare AI, একজন পেশাদার এবং সহানুভূতিশীল ক্লিনিক্যাল লক্ষণ পরীক্ষক এবং ট্রায়াজ সহকারী। "
-    "ইতিহাস এবং রোগীর বর্ণিত লক্ষণের ভিত্তিতে আপনাকে এখন একটি চূড়ান্ত ক্লিনিক্যাল মূল্যায়ন করতে হবে এবং রোগ নির্ণয় করতে হবে। "
+    "আপনার লক্ষ্য হলো রোগীর উল্লিখিত লক্ষণগুলি বিশ্লেষণ করা, সম্ভাব্য চিকিৎসা পরিস্থিতি মূল্যায়ন করা, "
+    "এবং রোগীকে সঠিক স্তরের চিকিৎসা সহায়তা পেতে সহায়তা করার জন্য একটি সুনির্দিষ্ট কাঠামোবদ্ধ মূল্যায়ন প্রদান করা। "
     "ক্লিনিক্যাল নির্দেশক, তীব্রতার লক্ষণ এবং সম্ভাব্য লাল সংকেত (red flags) এর জন্য রোগীর বিবরণটি সাবধানে বিশ্লেষণ করুন। "
     "সিস্টেম যাতে তথ্যগুলি সঠিকভাবে পার্স করতে পারে, সেজন্য আপনাকে অবশ্যই নিম্নলিখিত বিন্যাসটি কঠোরভাবে অনুসরণ করতে হবে:\n\n"
     "**রোগ**: [সবচেয়ে সম্ভাব্য রোগ বা অবস্থার নাম]\n"
@@ -52,20 +54,6 @@ SYSTEM_PROMPT_BN = (
     "২. [দ্বিতীয় সতর্কতা বা পরবর্তী পদক্ষেপ]\n"
     "৩. [তৃতীয় সতর্কতা বা পরবর্তী পদক্ষেপ]\n\n"
     "সর্বদা রোগীকে মনে করিয়ে দিন যে এই মূল্যায়নটি কোনো চূড়ান্ত রোগ নির্ণয় নয় এবং তাদের অবশ্যই একজন যোগ্যতাসম্পন্ন চিকিৎসকের সাথে পরামর্শ করতে হবে।"
-)
-
-SYSTEM_PROMPT_CLARIFY_EN = (
-    "You are ThinkCare AI, a professional and empathetic clinical symptom checker and triage assistant. "
-    "The patient is explaining their symptoms. Do NOT provide a final diagnosis, severity level, or precautions list yet. "
-    "Instead, ask 1 or 2 targeted, clarifying clinical questions to gather more context (e.g., duration, severity, onset, triggers, or associated symptoms) and help understand their condition better. "
-    "Be empathetic, concise, and professional. If the patient has only greeted you, greet them back warmly and ask how you can help."
-)
-
-SYSTEM_PROMPT_CLARIFY_BN = (
-    "আপনি ThinkCare AI, একজন পেশাদার এবং সহানুভূতিশীল ক্লিনিক্যাল লক্ষণ পরীক্ষক এবং ট্রায়াজ সহকারী। "
-    "রোগী তাদের লক্ষণগুলি বর্ণনা করছেন। এখনও কোনো চূড়ান্ত রোগ নির্ণয়, তীব্রতার মাত্রা, বা সতর্কতার তালিকা প্রদান করবেন না। "
-    "এর পরিবর্তে, লক্ষণগুলির আরও বিস্তারিত তথ্য (যেমন: সময়কাল, তীব্রতা, কখন শুরু হয়েছে, বা অন্যান্য সহযোগী লক্ষণ) জানতে ১ বা ২টি সুনির্দিষ্ট ক্লিনিক্যাল প্রশ্ন জিজ্ঞাসা করুন যাতে তাদের অবস্থা আরও ভালোভাবে বোঝা যায়। "
-    "সহানুভূতিশীল, সংক্ষিপ্ত এবং পেশাদার হন। রোগী যদি কেবল আপনাকে শুভেচ্ছা জানান (যেমন: হাই/হ্যালো), তবে উষ্ণভাবে উত্তর দিন এবং জিজ্ঞাসা করুন কীভাবে আপনি সাহায্য করতে পারেন।"
 )
 
 def load_slm():
@@ -144,15 +132,53 @@ def run_slm_inference(message: str, history: List[ChatMessage], language: Option
             use_bn = False
         else:
             use_bn = is_bangla(message)
-            
-        # Count user turns
-        user_turns = sum(1 for msg in history if msg.sender == "user")
-        total_user_turns = user_turns + 1
+        system_prompt = SYSTEM_PROMPT_BN if use_bn else SYSTEM_PROMPT_EN
         
-        if total_user_turns < 3:
-            system_prompt = SYSTEM_PROMPT_CLARIFY_BN if use_bn else SYSTEM_PROMPT_CLARIFY_EN
+        # Determine the number of user turns (prior user messages + current message)
+        user_turns = sum(1 for msg in history if msg.sender == "user") + 1
+        
+        # Build turn-based instructions based on language
+        if use_bn:
+            if user_turns < 3:
+                insist_keywords_bn = ["রোগ কি", "রোগ কি?", "রোগ নির্ণয়", "সিদ্ধান্ত", "ডায়াগনসিস", "চূড়ান্ত", "এখনই বলো"]
+                user_insisting_bn = any(kw in message for kw in insist_keywords_bn)
+                if user_insisting_bn:
+                    turn_instruction = (
+                        f"\n\n[সিস্টেম নির্দেশাবলী: এটি ধাপ {user_turns}, তবে রোগী সরাসরি রোগ নির্ণয় জানতে চাচ্ছেন। "
+                        "প্রশ্নোত্তর ধাপটি এড়িয়ে অবিলম্বে আপনার চূড়ান্ত ক্লিনিক্যাল মূল্যায়ন ও রোগ নির্ণয় দিন। "
+                        "অবশ্যই '**রোগ**:', '**তীব্রতা**:', এবং '**সুপারিশকৃত সতর্কতা**:' বিন্যাসটি অনুসরণ করুন।]"
+                    )
+                else:
+                    turn_instruction = (
+                        f"\n\n[সিস্টেম নির্দেশাবলী: এটি কথোপকথনের {user_turns} নম্বর ধাপ। জীবন সংশয়কারী জরুরি অবস্থা না থাকলে এখনই কোনো চূড়ান্ত রোগ নির্ণয় দেবেন না "
+                        "(অর্থাৎ '**রোগ**:', '**তীব্রতা**:', বা '**সুপারিশকৃত সতর্কতা**:' অংশগুলি যুক্ত করবেন না)। "
+                        "এর পরিবর্তে, লক্ষণগুলি আরও ভালোভাবে বোঝার জন্য ১ বা ২টি সংক্ষিপ্ত ও সহানুভূতিশীল প্রশ্ন জিজ্ঞাসা করুন।]"
+                    )
+            else:
+                turn_instruction = (
+                    f"\n\n[সিস্টেম নির্দেশাবলী: এটি ধাপ {user_turns}। আপনাকে এখন অবশ্যই আপনার চূড়ান্ত রোগ নির্ণয় এবং ক্লিনিক্যাল মূল্যায়ন প্রদান করতে হবে। "
+                    "কঠোরভাবে বিন্যাসটি অনুসরণ করুন: '**রোগ**:', '**তীব্রতা**:', '**সুপারিশকৃত সতর্কতা**:', এবং চিকিৎসা সংক্রান্ত সতর্কতা বার্তাটি অন্তর্ভুক্ত করুন।]"
+                )
         else:
-            system_prompt = SYSTEM_PROMPT_BN if use_bn else SYSTEM_PROMPT_EN
+            if user_turns < 3:
+                insist_keywords = ["diagnose", "diagnosis", "verdict", "what do i have", "tell me what is wrong", "immediate", "final"]
+                user_insisting = any(kw in message.lower() for kw in insist_keywords)
+                if user_insisting:
+                    turn_instruction = (
+                        f"\n\n[System Instructions: This is turn {user_turns}, but the patient is explicitly asking for a diagnosis. "
+                        "Bypass the question-gathering phase and provide the final clinical assessment and diagnostic verdict strictly following the format: '**Disease**:', '**Severity**:', and '**Recommended Precautions**:'.]"
+                    )
+                else:
+                    turn_instruction = (
+                        f"\n\n[System Instructions: This is turn {user_turns} of the conversation. Do NOT provide a final diagnostic verdict yet "
+                        "(do not output '**Disease**:', '**Severity**:', or '**Recommended Precautions**:') unless there is a severe/life-threatening emergency. "
+                        "Instead, ask 1 or 2 relevant, empathetic, and brief follow-up questions to understand their symptoms better.]"
+                    )
+            else:
+                turn_instruction = (
+                    f"\n\n[System Instructions: This is turn {user_turns}. You must now provide your final clinical assessment and diagnostic verdict. "
+                    "Strictly follow the formatting rules: include '**Disease**:', '**Severity**:', '**Recommended Precautions**:', and the medical disclaimer.]"
+                )
         
         messages = [{"role": "system", "content": system_prompt}]
         for msg in history:
@@ -160,7 +186,7 @@ def run_slm_inference(message: str, history: List[ChatMessage], language: Option
                 "role": "user" if msg.sender == "user" else "assistant",
                 "content": msg.text
             })
-        messages.append({"role": "user", "content": message})
+        messages.append({"role": "user", "content": message + turn_instruction})
         
         text = slm_tokenizer.apply_chat_template(
             messages,
@@ -241,24 +267,8 @@ def health():
 
 @app.post("/chat", response_model=ChatResponse)
 def chat_endpoint(payload: ChatRequest):
-    user_turns = sum(1 for msg in payload.history if msg.sender == "user")
-    total_user_turns = user_turns + 1
-    
     response_text = run_slm_inference(payload.message, payload.history, payload.language)
-    
-    if total_user_turns < 3:
-        # Force no verdict during clarification turns
-        parsed = {
-            "top_condition": None,
-            "top_confidence": None,
-            "predictions": [],
-            "precautions": [],
-            "aftermaths": None,
-            "verdict_given": False
-        }
-    else:
-        parsed = parse_slm_response(response_text)
-        
+    parsed = parse_slm_response(response_text)
     return ChatResponse(
         response=response_text,
         predictions=parsed["predictions"],

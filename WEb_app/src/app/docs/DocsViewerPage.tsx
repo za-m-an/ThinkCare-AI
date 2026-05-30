@@ -130,7 +130,7 @@ const ArchitectureDiagram = () => (
       {/* SLM */}
       <rect x="310" y="230" width="180" height="60" rx="12" fill="url(#boxGrad)" stroke="#f59e0b" strokeWidth="1.5" />
       <text x="400" y="255" textAnchor="middle" fill="#f59e0b" fontSize="11" fontWeight="600">ThinkCare SLM</text>
-      <text x="400" y="273" textAnchor="middle" fill="#64748b" fontSize="9">Qwen2.5 · FastAPI · Port 8002</text>
+      <text x="400" y="273" textAnchor="middle" fill="#64748b" fontSize="9">Qwen2.5 · Ollama · Port 11434</text>
 
       {/* CatBoost */}
       <rect x="570" y="230" width="180" height="60" rx="12" fill="url(#boxGrad)" stroke="#e879f9" strokeWidth="1.5" />
@@ -265,12 +265,42 @@ export default function DocsViewerPage() {
   }
 
   // ─── Sidebar ─────────────────────────────────────────────
-  const Sidebar = () => (
+  const renderSidebar = () => (
     <aside className="w-64 flex-shrink-0 flex flex-col h-full bg-[#0c101b] border-r border-[#1e293b]">
       {/* Logo */}
       <div className="flex items-center gap-3 p-5 border-b border-[#1e293b]">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#9cbbf8] to-[#4f7ef8] flex items-center justify-center flex-shrink-0">
-          <span className="text-white font-bold text-sm">T</span>
+        <div className="w-8 h-8 rounded-lg bg-[#12243d] flex items-center justify-center flex-shrink-0 shadow-md shadow-blue-500/20 border border-blue-500/10">
+          <svg width="24" height="24" viewBox="0 0 110 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="gNavDocsSidebar" x1="0" y1="0" x2="110" y2="110" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#00d4ff"/>
+                <stop offset="100%" stopColor="#00ffa3"/>
+              </linearGradient>
+              <clipPath id="hcNavDocsSidebar">
+                <path d="M55,38 C55,38 44,26 33,26 C20,26 11,36 11,48 C11,68 33,83 55,99 C77,83 99,68 99,48 C99,36 90,26 77,26 C66,26 55,38 55,38 Z"/>
+              </clipPath>
+            </defs>
+            <circle cx="55" cy="57" r="6" fill="none" stroke="#00d4ff" strokeWidth="2" opacity="0"
+              style={{ animation: "bloom 1.8s 2.6s ease-out infinite" }}/>
+            <g style={{ transformOrigin: "55px 60px", animation: "heartbeat 1.8s 2.4s ease-in-out infinite" }}>
+              <path d="M55,38 C55,38 44,26 33,26 C20,26 11,36 11,48 C11,68 33,83 55,99 C77,83 99,68 99,48 C99,36 90,26 77,26 C66,26 55,38 55,38 Z"
+                fill="#0a1828" stroke="url(#gNavDocsSidebar)" strokeWidth="2.8"
+                strokeDasharray="320" strokeDashoffset="320"
+                style={{ animation: "heartDraw 1.2s cubic-bezier(.4,0,.2,1) 0.2s forwards" }}/>
+            </g>
+            <polyline points="11,57 28,57 36,57 42,40 48,74 53,40 59,57 99,57"
+              fill="none" stroke="url(#gNavDocsSidebar)" strokeWidth="2.8"
+              strokeLinecap="round" strokeLinejoin="round"
+              strokeDasharray="220" strokeDashoffset="220"
+              clipPath="url(#hcNavDocsSidebar)"
+              style={{ animation: "ecgIn 0.9s cubic-bezier(.4,0,.2,1) 1.5s forwards" }}/>
+            <polyline points="11,57 28,57 36,57 42,40 48,74 53,40 59,57 99,57"
+              fill="none" stroke="url(#gNavDocsSidebar)" strokeWidth="2.8"
+              strokeLinecap="round" strokeLinejoin="round"
+              strokeDasharray="220" strokeDashoffset="220"
+              clipPath="url(#hcNavDocsSidebar)" opacity="0"
+              style={{ animation: "ecgLoop 1.8s 2.4s ease-in-out infinite" }}/>
+          </svg>
         </div>
         <div>
           <div className="text-white font-bold text-sm leading-tight">ThinkCare AI</div>
@@ -318,16 +348,6 @@ export default function DocsViewerPage() {
           </div>
         ))}
       </nav>
-
-      {/* Export */}
-      <div className="p-4 border-t border-[#1e293b]">
-        <button
-          onClick={handleExportPDF}
-          className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#9cbbf8]/10 border border-[#9cbbf8]/20 text-[#9cbbf8] rounded-xl text-xs font-semibold hover:bg-[#9cbbf8]/20 transition-colors"
-        >
-          <Download className="w-3.5 h-3.5" />Export PDF
-        </button>
-      </div>
     </aside>
   );
 
@@ -336,7 +356,7 @@ export default function DocsViewerPage() {
     <div className="min-h-screen bg-[#0c101b] flex">
       {/* Desktop sidebar */}
       <div className="hidden lg:flex sticky top-0 h-screen">
-        <Sidebar />
+        {renderSidebar()}
       </div>
 
       {/* Mobile sidebar overlay */}
@@ -344,7 +364,7 @@ export default function DocsViewerPage() {
         <div className="lg:hidden fixed inset-0 z-50 flex">
           <div className="absolute inset-0 bg-black/60" onClick={() => setSidebarOpen(false)} />
           <div className="relative w-72 h-full flex">
-            <Sidebar />
+            {renderSidebar()}
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -363,8 +383,38 @@ export default function DocsViewerPage() {
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2 flex-1">
-            <div className="w-6 h-6 rounded-md bg-gradient-to-br from-[#9cbbf8] to-[#4f7ef8] flex items-center justify-center">
-              <span className="text-white font-bold text-xs">T</span>
+            <div className="w-6 h-6 rounded-md bg-[#12243d] flex items-center justify-center shadow-sm shadow-blue-500/20 border border-blue-500/10">
+              <svg width="18" height="18" viewBox="0 0 110 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="gNavDocsMobile" x1="0" y1="0" x2="110" y2="110" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#00d4ff"/>
+                    <stop offset="100%" stopColor="#00ffa3"/>
+                  </linearGradient>
+                  <clipPath id="hcNavDocsMobile">
+                    <path d="M55,38 C55,38 44,26 33,26 C20,26 11,36 11,48 C11,68 33,83 55,99 C77,83 99,68 99,48 C99,36 90,26 77,26 C66,26 55,38 55,38 Z"/>
+                  </clipPath>
+                </defs>
+                <circle cx="55" cy="57" r="6" fill="none" stroke="#00d4ff" strokeWidth="2" opacity="0"
+                  style={{ animation: "bloom 1.8s 2.6s ease-out infinite" }}/>
+                <g style={{ transformOrigin: "55px 60px", animation: "heartbeat 1.8s 2.4s ease-in-out infinite" }}>
+                  <path d="M55,38 C55,38 44,26 33,26 C20,26 11,36 11,48 C11,68 33,83 55,99 C77,83 99,68 99,48 C99,36 90,26 77,26 C66,26 55,38 55,38 Z"
+                    fill="#0a1828" stroke="url(#gNavDocsMobile)" strokeWidth="2.8"
+                    strokeDasharray="320" strokeDashoffset="320"
+                    style={{ animation: "heartDraw 1.2s cubic-bezier(.4,0,.2,1) 0.2s forwards" }}/>
+                </g>
+                <polyline points="11,57 28,57 36,57 42,40 48,74 53,40 59,57 99,57"
+                  fill="none" stroke="url(#gNavDocsMobile)" strokeWidth="2.8"
+                  strokeLinecap="round" strokeLinejoin="round"
+                  strokeDasharray="220" strokeDashoffset="220"
+                  clipPath="url(#hcNavDocsMobile)"
+                  style={{ animation: "ecgIn 0.9s cubic-bezier(.4,0,.2,1) 1.5s forwards" }}/>
+                <polyline points="11,57 28,57 36,57 42,40 48,74 53,40 59,57 99,57"
+                  fill="none" stroke="url(#gNavDocsMobile)" strokeWidth="2.8"
+                  strokeLinecap="round" strokeLinejoin="round"
+                  strokeDasharray="220" strokeDashoffset="220"
+                  clipPath="url(#hcNavDocsMobile)" opacity="0"
+                  style={{ animation: "ecgLoop 1.8s 2.4s ease-in-out infinite" }}/>
+              </svg>
             </div>
             <span className="text-white font-semibold text-sm">ThinkCare AI Docs</span>
           </div>

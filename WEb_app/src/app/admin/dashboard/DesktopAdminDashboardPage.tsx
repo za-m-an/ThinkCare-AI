@@ -58,6 +58,8 @@ export default function DesktopAdminDashboardPage() {
 
   const [savingConfig, setSavingConfig] = useState(false);
   const [configSuccess, setConfigSuccess] = useState(false);
+  const [testingOllama, setTestingOllama] = useState(false);
+  const [ollamaStatus, setOllamaStatus] = useState<{ success: boolean; message: string; foundModel?: boolean } | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -132,6 +134,36 @@ export default function DesktopAdminDashboardPage() {
       alert("Error saving configurations.");
     } finally {
       setSavingConfig(false);
+    }
+  };
+
+  const handleTestOllama = async () => {
+    setTestingOllama(true);
+    setOllamaStatus(null);
+    try {
+      const res = await fetch("/api/admin/test-ollama");
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setOllamaStatus({
+          success: true,
+          message: data.foundModel 
+            ? "Connection successful! 'thinkcare-slm' model is ready on the server."
+            : `Connected to Ollama, but 'thinkcare-slm' model was not found. Available models: ${data.models.join(", ") || "None"}`,
+          foundModel: data.foundModel
+        });
+      } else {
+        setOllamaStatus({
+          success: false,
+          message: data.error || "Could not reach the Ollama server."
+        });
+      }
+    } catch (err: any) {
+      setOllamaStatus({
+        success: false,
+        message: err.message || "Failed to initiate test request."
+      });
+    } finally {
+      setTestingOllama(false);
     }
   };
 
@@ -239,12 +271,68 @@ export default function DesktopAdminDashboardPage() {
                   </select>
                 </div>
 
+                {modelMode === "slm" && (
+                  <div className="space-y-3">
+                    <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-[#9cbbf8] text-[11px] leading-relaxed">
+                      <span className="font-bold block mb-1">Direct SLM Mode Active:</span>
+                      In direct SLM mode, the user prompts are directly processed by the Qwen2.5-SLM model via Ollama API on port 11434, bypassing LLM (Gemini) preprocessing and CatBoost classification entirely.
+                    </div>
+                    
+                    <button
+                      type="button"
+                      disabled={testingOllama}
+                      onClick={handleTestOllama}
+                      className="w-full py-2.5 rounded-xl border border-blue-500/30 hover:bg-blue-500/10 text-blue-400 font-bold text-xs uppercase tracking-wide transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {testingOllama ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          Testing Connection...
+                        </>
+                      ) : (
+                        "Test Ollama Connection"
+                      )}
+                    </button>
+
+                    {ollamaStatus && (
+                      <div className={`p-3 rounded-xl border text-[11px] leading-relaxed flex gap-2.5 ${
+                        ollamaStatus.success
+                          ? ollamaStatus.foundModel
+                            ? "bg-green-500/10 border-green-500/20 text-green-400"
+                            : "bg-yellow-500/10 border-yellow-500/20 text-yellow-400"
+                          : "bg-red-500/10 border-red-500/20 text-red-400"
+                      }`}>
+                        {ollamaStatus.success ? (
+                          ollamaStatus.foundModel ? (
+                            <CheckCircle2 className="h-4.5 w-4.5 shrink-0 mt-0.5" />
+                          ) : (
+                            <AlertTriangle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
+                          )
+                        ) : (
+                          <AlertTriangle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
+                        )}
+                        <div>
+                          <span className="font-bold block">
+                            {ollamaStatus.success 
+                              ? ollamaStatus.foundModel 
+                                ? "Ollama Connected" 
+                                : "Ollama Connected (Warning)"
+                              : "Connection Failed"}
+                          </span>
+                          {ollamaStatus.message}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-2">Gemini API Key</label>
+                  <label className={`block text-xs font-semibold text-slate-400 mb-2 ${modelMode === "slm" ? "opacity-50" : ""}`}>Gemini API Key</label>
                   <div className="relative">
                     <input
                       type="password"
-                      className="w-full rounded-xl border border-[#2e3e56] bg-[#0c101b] pl-4 pr-10 py-3 text-xs text-white focus:border-blue-400 focus:outline-none transition-colors"
+                      disabled={modelMode === "slm"}
+                      className="w-full rounded-xl border border-[#2e3e56] bg-[#0c101b] pl-4 pr-10 py-3 text-xs text-white focus:border-blue-400 focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       placeholder="AIzaSy..."
                       value={geminiApiKey}
                       onChange={(e) => setGeminiApiKey(e.target.value)}
@@ -257,15 +345,16 @@ export default function DesktopAdminDashboardPage() {
                 <div className="pt-2 border-t border-[#1e293b]/40 my-4" />
 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className={`flex items-center justify-between ${modelMode === "slm" ? "opacity-50" : ""}`}>
                     <div>
                       <span className="text-xs font-bold text-slate-300 block">Model Auto-Scaling</span>
                       <span className="text-[9px] text-slate-500">Auto-shift to CPU on CUDA memory overflow.</span>
                     </div>
                     <button
                       type="button"
+                      disabled={modelMode === "slm"}
                       onClick={() => setAutoScaling(!autoScaling)}
-                      className={`h-6 w-11 rounded-full relative transition-colors ${
+                      className={`h-6 w-11 rounded-full relative transition-colors disabled:cursor-not-allowed ${
                         autoScaling ? "bg-blue-500" : "bg-[#0c101b] border border-[#2e3e56]"
                       }`}
                     >
@@ -277,15 +366,16 @@ export default function DesktopAdminDashboardPage() {
                     </button>
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  <div className={`flex items-center justify-between ${modelMode === "slm" ? "opacity-50" : ""}`}>
                     <div>
                       <span className="text-xs font-bold text-slate-300 block">Standard Fallback Mode</span>
                       <span className="text-[9px] text-slate-500">Use pre-cached responses when servers time out.</span>
                     </div>
                     <button
                       type="button"
+                      disabled={modelMode === "slm"}
                       onClick={() => setStandardFallback(!standardFallback)}
-                      className={`h-6 w-11 rounded-full relative transition-colors ${
+                      className={`h-6 w-11 rounded-full relative transition-colors disabled:cursor-not-allowed ${
                         standardFallback ? "bg-blue-500" : "bg-[#0c101b] border border-[#2e3e56]"
                       }`}
                     >
@@ -302,7 +392,7 @@ export default function DesktopAdminDashboardPage() {
 
                 {/* Slider values */}
                 <div className="space-y-4">
-                  <div>
+                  <div className={modelMode === "slm" ? "opacity-50" : ""}>
                     <div className="flex justify-between items-center text-xs font-semibold text-slate-400 mb-1.5">
                       <span>Actionable Diagnosis Threshold</span>
                       <span className="text-blue-400 font-bold">{diagnosisThreshold}%</span>
@@ -311,13 +401,14 @@ export default function DesktopAdminDashboardPage() {
                       type="range"
                       min="50"
                       max="100"
-                      className="w-full h-1 bg-[#0c101b] rounded-lg appearance-none cursor-pointer accent-blue-400"
+                      disabled={modelMode === "slm"}
+                      className="w-full h-1 bg-[#0c101b] rounded-lg appearance-none cursor-pointer accent-blue-400 disabled:cursor-not-allowed"
                       value={diagnosisThreshold}
                       onChange={(e) => setDiagnosisThreshold(parseInt(e.target.value))}
                     />
                   </div>
 
-                  <div>
+                  <div className={modelMode === "slm" ? "opacity-50" : ""}>
                     <div className="flex justify-between items-center text-xs font-semibold text-slate-400 mb-1.5">
                       <span>Human Review Flag Threshold</span>
                       <span className="text-blue-400 font-bold">{humanReviewThreshold}%</span>
@@ -326,7 +417,8 @@ export default function DesktopAdminDashboardPage() {
                       type="range"
                       min="30"
                       max="80"
-                      className="w-full h-1 bg-[#0c101b] rounded-lg appearance-none cursor-pointer accent-blue-400"
+                      disabled={modelMode === "slm"}
+                      className="w-full h-1 bg-[#0c101b] rounded-lg appearance-none cursor-pointer accent-blue-400 disabled:cursor-not-allowed"
                       value={humanReviewThreshold}
                       onChange={(e) => setHumanReviewThreshold(parseInt(e.target.value))}
                     />

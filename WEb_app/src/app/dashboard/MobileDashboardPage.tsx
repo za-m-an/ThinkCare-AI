@@ -30,11 +30,14 @@ export default function MobileDashboardPage() {
   const [onboardingData, setOnboardingData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Vitals states
-  const [heartRate, setHeartRate] = useState(72);
-  const [bloodPressure, setBloodPressure] = useState("118/75");
-  const [spO2, setSpO2] = useState(99);
-  const [healthScore, setHealthScore] = useState(92);
+  // Vitals states (wearable integration disabled)
+  const [healthScore, setHealthScore] = useState(95);
+
+  // Clinical Analytics states
+  const [medications, setMedications] = useState<string[]>([]);
+  const [precautions, setPrecautions] = useState<string[]>([]);
+  const [riskProbability, setRiskProbability] = useState<Array<{ condition: string; probability: number }>>([]);
+  const [scoreHistory, setScoreHistory] = useState<number[]>([100, 100, 100, 100, 100, 100, 100]);
 
   // States
   const [trendType, setTrendType] = useState<"week" | "month">("week");
@@ -61,50 +64,23 @@ export default function MobileDashboardPage() {
           if (onboardingRes.ok && onboardingData.onboarding) {
             const ob = onboardingData.onboarding;
             setOnboardingData(ob);
-            setHeartRate(ob.heartRate || 72);
-            if (ob.bloodPressureSystolic && ob.bloodPressureDiastolic) {
-              setBloodPressure(`${ob.bloodPressureSystolic}/${ob.bloodPressureDiastolic}`);
-            }
-            setSpO2(ob.spO2 || 99);
 
-            let score = 75;
-            if (ob.dailySteps > 8000) score += 10;
-            if (ob.avgSleepHours >= 7 && ob.avgSleepHours <= 9) score += 10;
-            if (ob.stressLevel < 4) score += 5;
-            if (ob.smokingPacksPerWeek === 0) score += 5;
-            if (score > 100) score = 100;
-            setHealthScore(score);
-
-            setNotifications([
-              {
-                id: 1,
-                text: language === "bn"
-                  ? `ভাইটাল সিঙ্ক করা হয়েছে: বিশ্রামকালীন হৃদস্পন্দন ${ob.heartRate || 72} bpm এবং SpO2 ${ob.spO2 || 99}% সফলভাবে প্রোফাইলে লগ করা হয়েছে।`
-                  : `resting heart rate of ${ob.heartRate || 72} bpm and SpO2 of ${ob.spO2 || 99}% logged.`,
-                unread: true
-              },
-              {
-                id: 2,
-                text: language === "bn"
-                  ? `রিপোর্ট প্রস্তুত: ${ob.firstName || "রোগীর"} জন্য চিকিৎসক-মুখী সংক্ষিপ্ত বিবরণ প্রস্তুত।`
-                  : `Physician report ready for ${ob.firstName || "patient"}.`,
-                unread: true
-              },
-              {
-                id: 3,
-                text: language === "bn"
-                  ? `সুস্থতার টিপ: দৈনিক ${ob.dailySteps || 5000} পদক্ষেপের লক্ষ্য পূরণ করুন।`
-                  : `Wellness Tip: Meet steps goal of ${ob.dailySteps || 5000} steps.`,
-                unread: true
-              }
-            ]);
+            // Dynamic notifications will be loaded from insightRes below
           }
 
           try {
             const insightRes = await fetch(`/api/dashboard/insight?lang=${language}`);
             if (insightRes.ok) {
-              const insightData = await insightRes.json();
-              setAiInsight(insightData.insight);
+              const data = await insightRes.json();
+              setAiInsight(data.insight);
+              setHealthScore(data.healthScore || 95);
+              setScoreHistory(data.scoreHistory || [100, 100, 100, 100, 100, 100, 100]);
+              setMedications(data.medications || []);
+              setPrecautions(data.precautions || []);
+              setRiskProbability(data.riskProbability || []);
+              if (data.notifications) {
+                setNotifications(data.notifications);
+              }
             }
           } catch (err) {
             console.error(err);
@@ -130,32 +106,14 @@ export default function MobileDashboardPage() {
   };
 
   const getStepsData = () => {
-    const baseSteps = onboardingData?.dailySteps || 5000;
-    if (trendType === "week") {
-      const days = ["M", "T", "W", "T", "F", "S", "S"];
-      const todayDay = new Date().getDay();
-      const todayIndex = todayDay === 0 ? 6 : todayDay - 1;
-      return days.map((day, idx) => {
-        const seed = (idx + 3) * 17 % 10;
-        const multiplier = 0.75 + (seed / 10) * 0.4;
-        let steps = Math.floor(baseSteps * multiplier);
-        if (idx === todayIndex) steps = baseSteps;
-        return { label: day, steps, active: idx === todayIndex };
-      });
-    } else {
-      const list = [];
-      for (let i = 14; i >= 0; i--) { // Max 15 bars for mobile view
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const dateLabel = d.getDate().toString();
-        const seed = (i + 7) * 13 % 10;
-        const multiplier = 0.7 + (seed / 10) * 0.45;
-        let steps = Math.floor(baseSteps * multiplier);
-        if (i === 0) steps = baseSteps;
-        list.push({ label: dateLabel, steps, active: i === 0 });
-      }
-      return list;
-    }
+    const days = ["M", "T", "W", "T", "F", "S", "S"];
+    const todayDay = new Date().getDay();
+    const todayIndex = todayDay === 0 ? 6 : todayDay - 1;
+    
+    return days.map((day, idx) => {
+      const scoreVal = scoreHistory[idx] !== undefined ? scoreHistory[idx] : 100;
+      return { label: day, steps: scoreVal, active: idx === todayIndex };
+    });
   };
 
   if (loading) {
@@ -227,63 +185,90 @@ export default function MobileDashboardPage() {
           </p>
         </div>
 
-        {/* Vitals Summary Grid */}
-        <div className="grid grid-cols-3 gap-2">
-          {/* Heart rate */}
-          <div className="bg-[#131824] rounded-xl border border-[#1e293b] p-3 text-center flex flex-col justify-between h-24">
-            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500 block">{t("dashboard", "pulse")}</span>
-            <span className="text-base font-extrabold text-slate-200 mt-1 block">
-              {heartRate} <span className="text-[10px] font-normal text-slate-500">bpm</span>
+        {/* Medications, Precautions, and Risk Probability Cards */}
+        <div className="space-y-3">
+          {/* Medications Panel */}
+          <div className="bg-[#131824] rounded-xl border border-[#1e293b] p-4 shadow-md space-y-3">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block font-sans">
+              {language === "bn" ? "ওষুধ ও নির্দেশনা" : "Medication & Guidelines"}
             </span>
-            <div className="flex justify-center text-red-500 mt-1.5">
-              <Heart className="h-4 w-4 animate-pulse" />
+            <div className="space-y-2 max-h-36 overflow-y-auto pt-0.5">
+              {medications.length === 0 ? (
+                <p className="text-[10px] text-slate-500 font-sans leading-normal">
+                  {language === "bn" ? "কোনো ওষুধ সুপারিশ করা হয়নি।" : "No medications active or discussed."}
+                </p>
+              ) : (
+                medications.map((med, idx) => (
+                  <div key={idx} className="flex items-center gap-2 px-2.5 py-2 bg-blue-500/5 border border-blue-500/10 rounded-lg text-[11px] text-slate-300 font-sans">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0"></span>
+                    <span className="truncate">{med}</span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
-          {/* Blood Pressure */}
-          <div className="bg-[#131824] rounded-xl border border-[#1e293b] p-3 text-center flex flex-col justify-between h-24">
-            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500 block">{t("dashboard", "bp")}</span>
-            <span className="text-base font-extrabold text-slate-200 mt-1 block leading-tight">
-              {bloodPressure}
+          {/* Precautions Panel */}
+          <div className="bg-[#131824] rounded-xl border border-[#1e293b] p-4 shadow-md space-y-3">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block font-sans">
+              {language === "bn" ? "প্রয়োজনীয় সতর্কতা" : "Clinical Precautions"}
             </span>
-            <div className="flex justify-center text-blue-400 mt-1.5">
-              <Droplet className="h-4 w-4" />
+            <div className="space-y-2 max-h-36 overflow-y-auto pt-0.5">
+              {precautions.length === 0 ? (
+                <p className="text-[10px] text-slate-500 font-sans leading-normal">
+                  {language === "bn" ? "কোনো সতর্কতা নেই।" : "No critical active warnings."}
+                </p>
+              ) : (
+                precautions.map((prec, idx) => (
+                  <div key={idx} className="flex items-start gap-2 px-2.5 py-2 bg-yellow-500/5 border border-yellow-500/10 rounded-lg text-[11px] text-slate-300 font-sans">
+                    <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 shrink-0 mt-1.5"></span>
+                    <span>{prec}</span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
-          {/* Oxygen */}
-          <div className="bg-[#131824] rounded-xl border border-[#1e293b] p-3 text-center flex flex-col justify-between h-24">
-            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500 block">{t("profile", "spO2")}</span>
-            <span className="text-base font-extrabold text-slate-200 mt-1 block">
-              {spO2} <span className="text-[10px] font-normal text-slate-500">%</span>
+          {/* Risk Probability Panel */}
+          <div className="bg-[#131824] rounded-xl border border-[#1e293b] p-4 shadow-md space-y-3">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block font-sans">
+              {language === "bn" ? "রোগের ঝুঁকির সম্ভাবনা" : "Clinical Risk Assessment"}
             </span>
-            <div className="flex justify-center text-emerald-400 mt-1.5">
-              <Wind className="h-4 w-4" />
+            <div className="space-y-2.5 max-h-36 overflow-y-auto pt-0.5">
+              {riskProbability.length === 0 ? (
+                <p className="text-[10px] text-slate-500 font-sans leading-normal">
+                  {language === "bn" ? "কোনো ঝুঁকি চিহ্নিত করা হয়নি।" : "No specific risks detected."}
+                </p>
+              ) : (
+                riskProbability.map((risk, idx) => (
+                  <div key={idx} className="space-y-1 font-sans">
+                    <div className="flex justify-between text-[11px] font-semibold">
+                      <span className="text-slate-300 truncate max-w-[75%]">{risk.condition}</span>
+                      <span className="text-blue-400 font-bold">{risk.probability}%</span>
+                    </div>
+                    <div className="w-full h-1 bg-[#0c101b] rounded-full overflow-hidden border border-[#1e293b]/40">
+                      <div 
+                        style={{ width: `${risk.probability}%` }}
+                        className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                      ></div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
 
-        {/* Steps graph trend */}
+        {/* Health Score trend */}
         <div className="bg-[#131824] rounded-2xl border border-[#1e293b] p-4 shadow-xl space-y-4">
           <div className="flex justify-between items-center">
             <div>
-              <h3 className="text-xs font-bold text-slate-200 font-sans">{t("dashboard", "activity")}</h3>
-              <span className="text-[9px] text-slate-500 font-semibold block uppercase">{t("dashboard", "stepsProgress")}</span>
-            </div>
-
-            <div className="flex rounded-lg bg-[#0c101b] p-0.5 text-[10px] border border-[#1e293b]">
-              <button 
-                onClick={() => setTrendType("week")}
-                className={`px-3 py-1 rounded-md font-semibold cursor-pointer ${trendType === "week" ? "bg-blue-500 text-white" : "text-slate-400"}`}
-              >
-                {t("dashboard", "week")}
-              </button>
-              <button 
-                onClick={() => setTrendType("month")}
-                className={`px-3 py-1 rounded-md font-semibold cursor-pointer ${trendType === "month" ? "bg-blue-500 text-white" : "text-slate-400"}`}
-              >
-                {t("dashboard", "month")}
-              </button>
+              <h3 className="text-xs font-bold text-slate-200 font-sans">
+                {language === "bn" ? "স্বাস্থ্য স্কোরের প্রবণতা" : "Health Score Trend"}
+              </h3>
+              <span className="text-[9px] text-slate-500 font-semibold block uppercase">
+                {language === "bn" ? "সাপ্তাহিক উপসর্গ বিশ্লেষণ ট্র্যাক" : "Weekly Clinical Tracking Status"}
+              </span>
             </div>
           </div>
 
@@ -291,16 +276,16 @@ export default function MobileDashboardPage() {
           <div className="pt-2">
             <div className="flex items-end justify-between h-36 border-b border-[#1e293b] pb-2 px-1 relative">
               <div className="absolute left-0 right-0 border-t border-[#1e293b]/50 top-[0%] pointer-events-none">
-                <span className="absolute -top-2 left-0 text-[7px] font-bold text-slate-600 font-sans">12K</span>
+                <span className="absolute -top-2 left-0 text-[7px] font-bold text-slate-600 font-sans">100%</span>
               </div>
               <div className="absolute left-0 right-0 border-t border-[#1e293b]/50 top-[50%] pointer-events-none">
-                <span className="absolute -top-2 left-0 text-[7px] font-bold text-slate-600 font-sans">6K</span>
+                <span className="absolute -top-2 left-0 text-[7px] font-bold text-slate-600 font-sans">50%</span>
               </div>
 
               {stepsData.map((d, index) => {
-                const percentageHeight = Math.min((d.steps / 12000) * 100, 100);
+                const percentageHeight = d.steps; // steps holds scoreVal (0-100)
                 return (
-                  <div key={index} className="flex-1 flex flex-col items-center mx-0.5">
+                  <div key={index} className="flex-1 flex flex-col justify-end items-center h-full mx-0.5">
                     <div
                       style={{ height: `${percentageHeight}%` }}
                       className={`w-full rounded-[3px] transition-all duration-300 ${d.active ? "bg-blue-500" : "bg-slate-700"}`}
@@ -311,15 +296,7 @@ export default function MobileDashboardPage() {
             </div>
             
             <div className="flex justify-between px-1 pt-2 text-[8px] font-bold text-slate-500 uppercase tracking-widest font-sans">
-              {trendType === "week" ? (
-                stepsData.map((d, idx) => <span key={idx} className="flex-1 text-center">{d.label}</span>)
-              ) : (
-                <>
-                  <span>Mon</span>
-                  <span>Mid</span>
-                  <span>Today</span>
-                </>
-              )}
+              {stepsData.map((d, idx) => <span key={idx} className="flex-1 text-center">{d.label}</span>)}
             </div>
           </div>
         </div>

@@ -34,22 +34,21 @@ export default function DesktopDashboardPage() {
   const [onboardingData, setOnboardingData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Vitals states
-  const [heartRate, setHeartRate] = useState(72);
-  const [bloodPressure, setBloodPressure] = useState("118/75");
-  const [spO2, setSpO2] = useState(99);
-  const [healthScore, setHealthScore] = useState(92);
+  // Vitals states (wearable integration disabled)
+  const [healthScore, setHealthScore] = useState(95);
+
+  // Clinical Analytics states
+  const [medications, setMedications] = useState<string[]>([]);
+  const [precautions, setPrecautions] = useState<string[]>([]);
+  const [riskProbability, setRiskProbability] = useState<Array<{ condition: string; probability: number }>>([]);
+  const [scoreHistory, setScoreHistory] = useState<number[]>([100, 100, 100, 100, 100, 100, 100]);
 
   // Interactivity states
   const [trendType, setTrendType] = useState<"week" | "month">("week");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [aiInsight, setAiInsight] = useState("Clinical engine analyzing onboarding data to formulate personalized insights...");
-  const [notifications, setNotifications] = useState<Notification[]>([
-    { id: 1, text: "Vitals Synchronized: Your blood oxygen and resting heart rate are within optimal ranges.", unread: true },
-    { id: 2, text: "Clinical Summary Generated: Physician-facing report updated with latest conversation notes.", unread: true },
-    { id: 3, text: "Physical Activity Update: You are currently on track to hit your weekly step goal.", unread: true }
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   // Click outside references
   const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -81,54 +80,29 @@ export default function DesktopDashboardPage() {
             return;
           }
 
-          // Fetch onboarding data for vitals
+          // Fetch onboarding data
           const onboardingRes = await fetch("/api/onboarding");
           const onboardingData = await onboardingRes.json();
           if (onboardingRes.ok && onboardingData.onboarding) {
             const ob = onboardingData.onboarding;
             setOnboardingData(ob);
-
-            setHeartRate(ob.heartRate || 72);
-            if (ob.bloodPressureSystolic && ob.bloodPressureDiastolic) {
-              setBloodPressure(`${ob.bloodPressureSystolic}/${ob.bloodPressureDiastolic}`);
-            }
-            setSpO2(ob.spO2 || 99);
-
-            // Compute health score based on onboarding
-            let score = 75;
-            if (ob.dailySteps > 8000) score += 10;
-            if (ob.avgSleepHours >= 7 && ob.avgSleepHours <= 9) score += 10;
-            if (ob.stressLevel < 4) score += 5;
-            if (ob.smokingPacksPerWeek === 0) score += 5;
-            if (score > 100) score = 100;
-            setHealthScore(score);
-
-            // Set real dynamic notifications based on vitals and name
-            setNotifications([
-              { 
-                id: 1, 
-                text: `Vitals Synchronized: Your resting heart rate of ${ob.heartRate || 72} bpm and SpO2 of ${ob.spO2 || 99}% have been successfully logged to your profile.`, 
-                unread: true 
-              },
-              { 
-                id: 2, 
-                text: `AI Report Ready: A physician-facing summary of your symptoms has been generated for ${ob.firstName || "patient"}.`, 
-                unread: true 
-              },
-              { 
-                id: 3, 
-                text: `Daily Wellness Tip: Focus on meeting your goal of ${ob.dailySteps || 5000} steps today to modulate metabolic parameters.`, 
-                unread: true 
-              }
-            ]);
+            // Dynamic notifications will be loaded from insightRes below
           }
 
-          // Fetch dynamic AI insight
+          // Fetch dynamic AI analytics
           try {
             const insightRes = await fetch(`/api/dashboard/insight?lang=${language}`);
             if (insightRes.ok) {
-              const insightData = await insightRes.json();
-              setAiInsight(insightData.insight);
+              const data = await insightRes.json();
+              setAiInsight(data.insight);
+              setHealthScore(data.healthScore || 95);
+              setScoreHistory(data.scoreHistory || [100, 100, 100, 100, 100, 100, 100]);
+              setMedications(data.medications || []);
+              setPrecautions(data.precautions || []);
+              setRiskProbability(data.riskProbability || []);
+              if (data.notifications) {
+                setNotifications(data.notifications);
+              }
             }
           } catch (insightErr) {
             console.error("Failed to load AI health insight", insightErr);
@@ -167,40 +141,18 @@ export default function DesktopDashboardPage() {
   };
 
   const getStepsData = () => {
-    const baseSteps = onboardingData?.dailySteps || 5000;
-    if (trendType === "week") {
-      const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-      const todayDay = new Date().getDay();
-      const todayIndex = todayDay === 0 ? 6 : todayDay - 1; // Mon=0, Sun=6
-      return days.map((day, idx) => {
-        const seed = (idx + 3) * 17 % 10;
-        const multiplier = 0.75 + (seed / 10) * 0.4;
-        let steps = Math.floor(baseSteps * multiplier);
-        if (idx === todayIndex) steps = baseSteps;
-        return {
-          label: day,
-          steps,
-          active: idx === todayIndex
-        };
-      });
-    } else {
-      const list = [];
-      for (let i = 29; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const dateLabel = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-        const seed = (i + 7) * 13 % 10;
-        const multiplier = 0.7 + (seed / 10) * 0.45;
-        let steps = Math.floor(baseSteps * multiplier);
-        if (i === 0) steps = baseSteps;
-        list.push({
-          label: dateLabel,
-          steps,
-          active: i === 0
-        });
-      }
-      return list;
-    }
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    const todayDay = new Date().getDay();
+    const todayIndex = todayDay === 0 ? 6 : todayDay - 1; // Mon=0, Sun=6
+    
+    return days.map((day, idx) => {
+      const scoreVal = scoreHistory[idx] !== undefined ? scoreHistory[idx] : 100;
+      return {
+        label: day,
+        steps: scoreVal, // Mapping to steps to reuse existing flex-rendering properties
+        active: idx === todayIndex
+      };
+    });
   };
 
   if (loading) {
@@ -432,75 +384,92 @@ export default function DesktopDashboardPage() {
             </div>
           </div>
 
-          {/* Vitals Summary Cards */}
+          {/* Medications, Precautions, and Risk Probability Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-[#131824] rounded-xl border border-[#1e293b] p-5 flex items-center justify-between shadow-md">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block font-sans">{t("dashboard", "restingHeartRate")}</span>
-                <span className="text-2xl font-extrabold text-slate-200 mt-2 block font-sans">
-                  {heartRate.toLocaleString(language === "bn" ? "bn-BD" : "en-US")} <span className="text-slate-500 text-xs font-normal">{language === "bn" ? "বিপিএম" : "bpm"}</span>
-                </span>
-              </div>
-              <div className="h-10 w-10 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center border border-red-500/10">
-                <Heart className="h-5 w-5" />
-              </div>
-            </div>
-
-            <div className="bg-[#131824] rounded-xl border border-[#1e293b] p-5 flex items-center justify-between shadow-md">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block font-sans">{t("dashboard", "bloodPressure")}</span>
-                <span className="text-2xl font-extrabold text-slate-200 mt-2 block font-sans">
-                  {bloodPressure} <span className="text-slate-500 text-xs font-normal">{language === "bn" ? "মিমিএইচজি" : "mmHg"}</span>
-                </span>
-              </div>
-              <div className="h-10 w-10 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/10">
-                <Droplet className="h-5 w-5" />
+            {/* Medications Panel */}
+            <div className="bg-[#131824] rounded-2xl border border-[#1e293b] p-6 shadow-xl space-y-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block font-sans">
+                {language === "bn" ? "ওষুধ ও নির্দেশনা" : "Medication & Guidelines"}
+              </span>
+              <div className="space-y-2.5 max-h-48 overflow-y-auto pt-1">
+                {medications.length === 0 ? (
+                  <p className="text-xs text-slate-500 font-sans leading-normal">
+                    {language === "bn" ? "কোনো ওষুধ সুপারিশ করা হয়নি।" : "No medications active or discussed."}
+                  </p>
+                ) : (
+                  medications.map((med, idx) => (
+                    <div key={idx} className="flex items-center gap-2.5 px-3.5 py-2.5 bg-blue-500/5 border border-blue-500/10 rounded-xl text-xs text-slate-300 font-sans">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0"></span>
+                      <span className="truncate">{med}</span>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 
-            <div className="bg-[#131824] rounded-xl border border-[#1e293b] p-5 flex items-center justify-between shadow-md">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block font-sans">{t("dashboard", "bloodOxygen")}</span>
-                <span className="text-2xl font-extrabold text-slate-200 mt-2 block font-sans">
-                  {spO2.toLocaleString(language === "bn" ? "bn-BD" : "en-US")} <span className="text-slate-500 text-xs font-normal">%</span>
-                </span>
+            {/* Precautions Panel */}
+            <div className="bg-[#131824] rounded-2xl border border-[#1e293b] p-6 shadow-xl space-y-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block font-sans">
+                {language === "bn" ? "প্রয়োজনীয় সতর্কতা" : "Clinical Precautions"}
+              </span>
+              <div className="space-y-2.5 max-h-48 overflow-y-auto pt-1">
+                {precautions.length === 0 ? (
+                  <p className="text-xs text-slate-500 font-sans leading-normal">
+                    {language === "bn" ? "কোনো সতর্কতা নেই।" : "No critical active warnings."}
+                  </p>
+                ) : (
+                  precautions.map((prec, idx) => (
+                    <div key={idx} className="flex items-start gap-2.5 px-3.5 py-2.5 bg-yellow-500/5 border border-yellow-500/10 rounded-xl text-xs text-slate-300 font-sans">
+                      <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 shrink-0 mt-1.5"></span>
+                      <span>{prec}</span>
+                    </div>
+                  ))
+                )}
               </div>
-              <div className="h-10 w-10 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/10">
-                <Wind className="h-5 w-5" />
+            </div>
+
+            {/* Risk Probability Panel */}
+            <div className="bg-[#131824] rounded-2xl border border-[#1e293b] p-6 shadow-xl space-y-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block font-sans">
+                {language === "bn" ? "রোগের ঝুঁকির সম্ভাবনা" : "Clinical Risk Assessment"}
+              </span>
+              <div className="space-y-3.5 max-h-48 overflow-y-auto pt-1">
+                {riskProbability.length === 0 ? (
+                  <p className="text-xs text-slate-500 font-sans leading-normal">
+                    {language === "bn" ? "কোনো ঝুঁকি চিহ্নিত করা হয়নি।" : "No specific risks detected."}
+                  </p>
+                ) : (
+                  riskProbability.map((risk, idx) => (
+                    <div key={idx} className="space-y-1.5 font-sans">
+                      <div className="flex justify-between text-xs font-semibold">
+                        <span className="text-slate-300 truncate max-w-[70%]">{risk.condition}</span>
+                        <span className="text-blue-400 font-bold">{risk.probability}%</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-[#0c101b] rounded-full overflow-hidden border border-[#1e293b]/40">
+                        <div 
+                          style={{ width: `${risk.probability}%` }}
+                          className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                        ></div>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
 
-          {/* Activity Trend Chart */}
+          {/* Health Score Trend Chart */}
           <div className="bg-[#131824] rounded-2xl border border-[#1e293b] p-6 shadow-xl space-y-6">
             <div className="flex justify-between items-center">
               <div>
-                <h3 className="text-sm font-bold text-slate-200 font-sans">{t("dashboard", "activityTrend")}</h3>
+                <h3 className="text-sm font-bold text-slate-200 font-sans">
+                  {language === "bn" ? "স্বাস্থ্য স্কোরের প্রবণতা" : "Physiological Health Score Trend"}
+                </h3>
                 <p className="text-[10px] text-slate-400 mt-1 leading-normal font-sans">
-                  {trendType === "week" ? t("dashboard", "weeklyStepsSummary") : t("dashboard", "monthlyStepsSummary")}
+                  {language === "bn"
+                    ? "সাপ্তাহিক উপসর্গ বিশ্লেষণ এবং ক্লিনিক্যাল স্ট্যাটাস ট্র্যাক"
+                    : "Weekly clinical symptom analysis and wellness tracking status"}
                 </p>
-              </div>
-              <div className="flex rounded-lg bg-[#0c101b] p-1 text-xs border border-[#1e293b]">
-                <button 
-                  onClick={() => setTrendType("week")}
-                  className={`px-3.5 py-1.5 rounded-md font-semibold cursor-pointer transition-all ${
-                    trendType === "week" 
-                      ? "bg-blue-500 text-white shadow-md" 
-                      : "text-slate-400 hover:text-slate-205"
-                  }`}
-                >
-                  {t("dashboard", "week")}
-                </button>
-                <button 
-                  onClick={() => setTrendType("month")}
-                  className={`px-3.5 py-1.5 rounded-md font-semibold cursor-pointer transition-all ${
-                    trendType === "month" 
-                      ? "bg-blue-500 text-white shadow-md" 
-                      : "text-slate-400 hover:text-slate-205"
-                  }`}
-                >
-                  {t("dashboard", "month")}
-                </button>
               </div>
             </div>
 
@@ -508,24 +477,22 @@ export default function DesktopDashboardPage() {
             <div className="pt-6">
               <div className="flex items-end justify-between h-48 border-b border-[#1e293b] pb-2 px-4 relative">
                 <div className="absolute left-0 right-0 border-t border-[#1e293b]/50 top-[0%] pointer-events-none">
-                  <span className="absolute -top-3 left-0 text-[8px] font-bold tracking-widest text-slate-600 font-sans">12K</span>
+                  <span className="absolute -top-3 left-0 text-[8px] font-bold tracking-widest text-slate-600 font-sans">100%</span>
                 </div>
                 <div className="absolute left-0 right-0 border-t border-[#1e293b]/50 top-[50%] pointer-events-none">
-                  <span className="absolute -top-3 left-0 text-[8px] font-bold tracking-widest text-slate-600 font-sans">6K</span>
+                  <span className="absolute -top-3 left-0 text-[8px] font-bold tracking-widest text-slate-600 font-sans">50%</span>
                 </div>
-                <span className="absolute bottom-2 left-0 text-[8px] font-bold tracking-widest text-slate-600 font-sans">0</span>
+                <span className="absolute bottom-2 left-0 text-[8px] font-bold tracking-widest text-slate-600 font-sans">0%</span>
 
                 {stepsData.map((d, index) => {
-                  const percentageHeight = Math.min((d.steps / 12000) * 100, 100);
+                  const percentageHeight = d.steps; // steps holds scoreVal (0-100)
                   return (
                     <div 
                       key={index} 
-                      className={`flex flex-col items-center group z-10 ${
-                        trendType === "week" ? "w-12" : "flex-1 max-w-[12px] mx-0.5"
-                      }`}
+                      className="flex flex-col justify-end items-center h-full group z-10 w-12"
                     >
                       <span className="text-[10px] font-bold text-slate-200 bg-slate-950 px-2 py-1 rounded border border-[#2e3e56] opacity-0 group-hover:opacity-100 transition-opacity mb-2 select-none pointer-events-none absolute -translate-y-8 shadow-xl z-50 whitespace-nowrap font-sans">
-                        {d.label}: {d.steps.toLocaleString(language === "bn" ? "bn-BD" : "en-US")} {language === "bn" ? "পদক্ষেপ" : "steps"}
+                        {d.label}: {d.steps.toLocaleString(language === "bn" ? "bn-BD" : "en-US")}%
                       </span>
                       <div
                         style={{ height: `${percentageHeight}%` }}
@@ -541,19 +508,11 @@ export default function DesktopDashboardPage() {
               </div>
 
               <div className="flex justify-between px-4 pt-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest font-sans">
-                {trendType === "week" ? (
-                  stepsData.map((d, idx) => (
-                    <span key={idx} className={`w-12 text-center ${d.active ? "text-blue-400 font-extrabold" : ""}`}>
-                      {d.label}
-                    </span>
-                  ))
-                ) : (
-                  <>
-                    <span>{stepsData[0]?.label}</span>
-                    <span>{stepsData[14]?.label}</span>
-                    <span>{stepsData[29]?.label}</span>
-                  </>
-                )}
+                {stepsData.map((d, idx) => (
+                  <span key={idx} className={`w-12 text-center ${d.active ? "text-blue-400 font-extrabold" : ""}`}>
+                    {d.label}
+                  </span>
+                ))}
               </div>
             </div>
           </div>

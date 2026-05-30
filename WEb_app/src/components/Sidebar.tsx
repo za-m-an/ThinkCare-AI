@@ -136,11 +136,39 @@ export default function Sidebar({ activeTab, userRole = "USER" }: SidebarProps) 
         {/* Brand logo header */}
         <div className="p-6 border-b border-[#1e293b]/50 flex items-center justify-between gap-2">
           <Link href="/dashboard" className="flex items-center gap-3 min-w-0 flex-1">
-            <img 
-              src="/logo.png" 
-              alt="TCA Logo" 
-              className="h-10 w-10 shrink-0 rounded-xl object-cover shadow-md shadow-blue-500/20" 
-            />
+            <div className="h-10 w-10 shrink-0 bg-[#12243d] rounded-xl flex items-center justify-center shadow-md shadow-blue-500/20 border border-blue-500/10">
+              <svg width="28" height="28" viewBox="0 0 110 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="gNavSidebar" x1="0" y1="0" x2="110" y2="110" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#00d4ff"/>
+                    <stop offset="100%" stopColor="#00ffa3"/>
+                  </linearGradient>
+                  <clipPath id="hcNavSidebar">
+                    <path d="M55,38 C55,38 44,26 33,26 C20,26 11,36 11,48 C11,68 33,83 55,99 C77,83 99,68 99,48 C99,36 90,26 77,26 C66,26 55,38 55,38 Z"/>
+                  </clipPath>
+                </defs>
+                <circle cx="55" cy="57" r="6" fill="none" stroke="#00d4ff" strokeWidth="2" opacity="0"
+                  style={{ animation: "bloom 1.8s 2.6s ease-out infinite" }}/>
+                <g style={{ transformOrigin: "55px 60px", animation: "heartbeat 1.8s 2.4s ease-in-out infinite" }}>
+                  <path d="M55,38 C55,38 44,26 33,26 C20,26 11,36 11,48 C11,68 33,83 55,99 C77,83 99,68 99,48 C99,36 90,26 77,26 C66,26 55,38 55,38 Z"
+                    fill="#0a1828" stroke="url(#gNavSidebar)" strokeWidth="2.8"
+                    strokeDasharray="320" strokeDashoffset="320"
+                    style={{ animation: "heartDraw 1.2s cubic-bezier(.4,0,.2,1) 0.2s forwards" }}/>
+                </g>
+                <polyline points="11,57 28,57 36,57 42,40 48,74 53,40 59,57 99,57"
+                  fill="none" stroke="url(#gNavSidebar)" strokeWidth="2.8"
+                  strokeLinecap="round" strokeLinejoin="round"
+                  strokeDasharray="220" strokeDashoffset="220"
+                  clipPath="url(#hcNavSidebar)"
+                  style={{ animation: "ecgIn 0.9s cubic-bezier(.4,0,.2,1) 1.5s forwards" }}/>
+                <polyline points="11,57 28,57 36,57 42,40 48,74 53,40 59,57 99,57"
+                  fill="none" stroke="url(#gNavSidebar)" strokeWidth="2.8"
+                  strokeLinecap="round" strokeLinejoin="round"
+                  strokeDasharray="220" strokeDashoffset="220"
+                  clipPath="url(#hcNavSidebar)" opacity="0"
+                  style={{ animation: "ecgLoop 1.8s 2.4s ease-in-out infinite" }}/>
+              </svg>
+            </div>
             <div className="truncate">
               <h2 className="font-extrabold text-base tracking-tight leading-none truncate font-sans">ThinkCare AI</h2>
               <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider mt-1 block truncate font-sans">

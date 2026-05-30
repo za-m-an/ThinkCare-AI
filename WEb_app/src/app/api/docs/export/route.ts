@@ -127,7 +127,7 @@ const DEFAULT_CONTENT: Record<string, unknown> = {
       { method: "GET", path: "/api/docs/access", auth: "None", desc: "Check if /docs is publicly accessible" },
     ],
     internal: [
-      { method: "POST", path: "http://localhost:8002/chat", auth: "Internal", desc: "SLM inference (Qwen2.5)" },
+      { method: "POST", path: "http://localhost:11434/api/chat", auth: "Internal", desc: "Ollama SLM chat API" },
       { method: "POST", path: "http://localhost:8001/predict", auth: "Internal", desc: "CatBoost disease classifier" },
     ],
   },
@@ -136,7 +136,7 @@ const DEFAULT_CONTENT: Record<string, unknown> = {
       name: "ThinkCare SLM",
       base: "Qwen2.5 (fine-tuned on clinical Q&A, EN+BN)",
       role: "Natural language understanding, health insight generation, Bangla response synthesis",
-      deployment: "FastAPI on CPU server, port 8002",
+      deployment: "Ollama API on VPS server, port 11434",
       latency: "~8-15s (CPU inference)",
     },
     classifier: {

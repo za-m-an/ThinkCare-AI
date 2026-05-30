@@ -58,6 +58,8 @@ export default function MobileAdminDashboardPage() {
 
   const [savingConfig, setSavingConfig] = useState(false);
   const [configSuccess, setConfigSuccess] = useState(false);
+  const [testingOllama, setTestingOllama] = useState(false);
+  const [ollamaStatus, setOllamaStatus] = useState<{ success: boolean; message: string; foundModel?: boolean } | null>(null);
 
   // Expandable logs
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
@@ -135,6 +137,36 @@ export default function MobileAdminDashboardPage() {
       console.error(err);
     } finally {
       setSavingConfig(false);
+    }
+  };
+
+  const handleTestOllama = async () => {
+    setTestingOllama(true);
+    setOllamaStatus(null);
+    try {
+      const res = await fetch("/api/admin/test-ollama");
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setOllamaStatus({
+          success: true,
+          message: data.foundModel 
+            ? "Connection successful! 'thinkcare-slm' model is ready on the server."
+            : `Connected to Ollama, but 'thinkcare-slm' model was not found. Available models: ${data.models.join(", ") || "None"}`,
+          foundModel: data.foundModel
+        });
+      } else {
+        setOllamaStatus({
+          success: false,
+          message: data.error || "Could not reach the Ollama server."
+        });
+      }
+    } catch (err: any) {
+      setOllamaStatus({
+        success: false,
+        message: err.message || "Failed to initiate test request."
+      });
+    } finally {
+      setTestingOllama(false);
     }
   };
 
@@ -251,12 +283,68 @@ export default function MobileAdminDashboardPage() {
                 </select>
               </div>
 
+              {modelMode === "slm" && (
+                <div className="space-y-2.5">
+                  <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-[#9cbbf8] text-[10px] leading-relaxed">
+                    <span className="font-bold block mb-1">Direct SLM Mode Active:</span>
+                    User prompts are processed directly by Qwen2.5-SLM via Ollama API on port 11434, bypassing LLM (Gemini) and CatBoost entirely.
+                  </div>
+                  
+                  <button
+                    type="button"
+                    disabled={testingOllama}
+                    onClick={handleTestOllama}
+                    className="w-full py-2.5 rounded-xl border border-blue-500/30 hover:bg-blue-500/10 text-blue-400 font-bold text-[10px] uppercase tracking-wide transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {testingOllama ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        Testing Connection...
+                      </>
+                    ) : (
+                      "Test Ollama Connection"
+                    )}
+                  </button>
+
+                  {ollamaStatus && (
+                    <div className={`p-2.5 rounded-xl border text-[10px] leading-relaxed flex gap-2 ${
+                      ollamaStatus.success
+                        ? ollamaStatus.foundModel
+                          ? "bg-green-500/10 border-green-500/20 text-green-400"
+                          : "bg-yellow-500/10 border-yellow-500/20 text-yellow-400"
+                        : "bg-red-500/10 border-red-500/20 text-red-400"
+                    }`}>
+                      {ollamaStatus.success ? (
+                        ollamaStatus.foundModel ? (
+                          <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
+                        ) : (
+                          <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                        )
+                      ) : (
+                        <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                      )}
+                      <div>
+                        <span className="font-bold block">
+                          {ollamaStatus.success 
+                            ? ollamaStatus.foundModel 
+                              ? "Ollama Connected" 
+                              : "Ollama Connected (Warning)"
+                            : "Connection Failed"}
+                        </span>
+                        {ollamaStatus.message}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div>
-                <label className="block text-[9px] font-bold text-slate-400 mb-1.5 uppercase">Gemini API Key</label>
+                <label className={`block text-[9px] font-bold text-slate-400 mb-1.5 uppercase ${modelMode === "slm" ? "opacity-50" : ""}`}>Gemini API Key</label>
                 <div className="relative">
                   <input
                     type="password"
-                    className="w-full rounded-xl border border-[#2e3e56] bg-[#0c101b] pl-4 pr-10 py-2.5 text-xs text-white"
+                    disabled={modelMode === "slm"}
+                    className="w-full rounded-xl border border-[#2e3e56] bg-[#0c101b] pl-4 pr-10 py-2.5 text-xs text-white disabled:opacity-50 disabled:cursor-not-allowed"
                     placeholder="AIzaSy..."
                     value={geminiApiKey}
                     onChange={(e) => setGeminiApiKey(e.target.value)}
@@ -265,7 +353,7 @@ export default function MobileAdminDashboardPage() {
                 </div>
               </div>
 
-              <div>
+              <div className={modelMode === "slm" ? "opacity-50" : ""}>
                 <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 mb-1">
                   <span>Diagnosis Action Limit</span>
                   <span className="text-blue-400">{diagnosisThreshold}%</span>
@@ -274,13 +362,14 @@ export default function MobileAdminDashboardPage() {
                   type="range"
                   min="50"
                   max="100"
-                  className="w-full h-1 bg-[#0c101b] rounded-lg appearance-none cursor-pointer accent-blue-400"
+                  disabled={modelMode === "slm"}
+                  className="w-full h-1 bg-[#0c101b] rounded-lg appearance-none cursor-pointer accent-blue-400 disabled:cursor-not-allowed"
                   value={diagnosisThreshold}
                   onChange={(e) => setDiagnosisThreshold(parseInt(e.target.value))}
                 />
               </div>
 
-              <div>
+              <div className={modelMode === "slm" ? "opacity-50" : ""}>
                 <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 mb-1">
                   <span>Human Review Limit</span>
                   <span className="text-blue-400">{humanReviewThreshold}%</span>
@@ -289,7 +378,8 @@ export default function MobileAdminDashboardPage() {
                   type="range"
                   min="30"
                   max="80"
-                  className="w-full h-1 bg-[#0c101b] rounded-lg appearance-none cursor-pointer accent-blue-400"
+                  disabled={modelMode === "slm"}
+                  className="w-full h-1 bg-[#0c101b] rounded-lg appearance-none cursor-pointer accent-blue-400 disabled:cursor-not-allowed"
                   value={humanReviewThreshold}
                   onChange={(e) => setHumanReviewThreshold(parseInt(e.target.value))}
                 />

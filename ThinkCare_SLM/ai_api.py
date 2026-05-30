@@ -85,8 +85,8 @@ def load_slm():
     except Exception as e:
         print(f"[ERROR] Failed to load SLM model: {e}")
 
-# Launch SLM loader in background thread to avoid blocking server boot
-threading.Thread(target=load_slm, daemon=True).start()
+# Load SLM model and tokenizer synchronously on startup to populate variables
+load_slm()
 
 
 # --- SCHEMAS ---
@@ -199,9 +199,9 @@ def run_slm_inference(message: str, history: List[ChatMessage], language: Option
         with torch.no_grad():
             outputs = slm_model.generate(
                 **inputs,
-                max_new_tokens=512,
+                max_new_tokens=150,
                 max_length=None,
-                temperature=0.7,
+                temperature=0.3,
                 top_p=0.9,
                 do_sample=True,
                 use_cache=True

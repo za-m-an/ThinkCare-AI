@@ -144,20 +144,20 @@ def run_slm_inference(message: str, history: List[ChatMessage], language: Option
                 user_insisting_bn = any(kw in message for kw in insist_keywords_bn)
                 if user_insisting_bn:
                     turn_instruction = (
-                        f"\n\n[সিস্টেম নির্দেশাবলী: এটি ধাপ {user_turns}, তবে রোগী সরাসরি রোগ নির্ণয় জানতে চাচ্ছেন। "
-                        "প্রশ্নোত্তর ধাপটি এড়িয়ে অবিলম্বে আপনার চূড়ান্ত ক্লিনিক্যাল মূল্যায়ন ও রোগ নির্ণয় দিন। "
-                        "অবশ্যই '**রোগ**:', '**তীব্রতা**:', এবং '**সুপারিশকৃত সতর্কতা**:' বিন্যাসটি অনুসরণ করুন।]"
+                        f"\n\n[সিস্টেম নির্দেশাবলী (কঠোর নিয়ম): এটি ধাপ {user_turns}, তবে রোগী সরাসরি রোগ নির্ণয় জানতে চাচ্ছেন। "
+                        "প্রশ্নোত্তর ধাপটি এড়িয়ে অবিলম্বে আপনার চূড়ান্ত রোগ নির্ণয় দিন। কোনো অতিরিক্ত কথা না লিখে সরাসরি বিন্যাসটি ব্যবহার করুন: "
+                        "'**রোগ**:', '**তীব্রতা**:', এবং '**সুপারিশকৃত সতর্কতা**:'।]"
                     )
                 else:
                     turn_instruction = (
-                        f"\n\n[সিস্টেম নির্দেশাবলী: এটি কথোপকথনের {user_turns} নম্বর ধাপ। জীবন সংশয়কারী জরুরি অবস্থা না থাকলে এখনই কোনো চূড়ান্ত রোগ নির্ণয় দেবেন না "
-                        "(অর্থাৎ '**রোগ**:', '**তীব্রতা**:', বা '**সুপারিশকৃত সতর্কতা**:' অংশগুলি যুক্ত করবেন না)। "
-                        "এর পরিবর্তে, লক্ষণগুলি আরও ভালোভাবে বোঝার জন্য ১ বা ২টি সংক্ষিপ্ত ও সহানুভূতিশীল প্রশ্ন জিজ্ঞাসা করুন।]"
+                        f"\n\n[সিস্টেম নির্দেশাবলী (কঠোর নিয়ম): এটি কথোপকথনের {user_turns} নম্বর ধাপ। জীবন সংশয়কারী জরুরি অবস্থা না থাকলে "
+                        "রোগ নির্ণয় দেবেন না (অর্থাৎ '**রোগ**:', '**তীব্রতা**:', বা '**সুপারিশকৃত সতর্কতা**:' লিখবেন না)। অত্যন্ত সংক্ষিপ্ত উত্তর দিন "
+                        "(সর্বোচ্চ ১৫-২০ শব্দের মধ্যে)। কোনো ভূমিকা বা অতিরিক্ত কথা না লিখে, রোগীকে সরাসরি ১ বা ২টি সংক্ষিপ্ত প্রশ্ন করুন লক্ষণগুলি বিস্তারিত জানতে।]"
                     )
             else:
                 turn_instruction = (
-                    f"\n\n[সিস্টেম নির্দেশাবলী: এটি ধাপ {user_turns}। আপনাকে এখন অবশ্যই আপনার চূড়ান্ত রোগ নির্ণয় এবং ক্লিনিক্যাল মূল্যায়ন প্রদান করতে হবে। "
-                    "কঠোরভাবে বিন্যাসটি অনুসরণ করুন: '**রোগ**:', '**তীব্রতা**:', '**সুপারিশকৃত সতর্কতা**:', এবং চিকিৎসা সংক্রান্ত সতর্কতা বার্তাটি অন্তর্ভুক্ত করুন।]"
+                    f"\n\n[সিস্টেম নির্দেশাবলী (কঠোর নিয়ম): এটি ধাপ {user_turns}। আপনাকে এখন অবশ্যই আপনার চূড়ান্ত রোগ নির্ণয় প্রদান করতে হবে। "
+                    "কোনো ভূমিকা বা অতিরিক্ত কথা না লিখে সরাসরি বিন্যাসটি ব্যবহার করুন: '**রোগ**:', '**তীব্রতা**:', এবং '**সুপারিশকৃত সতর্কতা**:' এবং চিকিৎসা সংক্রান্ত সতর্কতা দিন।]"
                 )
         else:
             if user_turns < 3:
@@ -165,19 +165,21 @@ def run_slm_inference(message: str, history: List[ChatMessage], language: Option
                 user_insisting = any(kw in message.lower() for kw in insist_keywords)
                 if user_insisting:
                     turn_instruction = (
-                        f"\n\n[System Instructions: This is turn {user_turns}, but the patient is explicitly asking for a diagnosis. "
-                        "Bypass the question-gathering phase and provide the final clinical assessment and diagnostic verdict strictly following the format: '**Disease**:', '**Severity**:', and '**Recommended Precautions**:'.]"
+                        f"\n\n[System Instructions (STRICT RULE): This is turn {user_turns}, but the patient is explicitly asking for a diagnosis. "
+                        "Bypass questioning and provide the final diagnostic verdict immediately. Do not write any preamble, "
+                        "start directly with '**Disease**:', '**Severity**:', and '**Recommended Precautions**:'.]"
                     )
                 else:
                     turn_instruction = (
-                        f"\n\n[System Instructions: This is turn {user_turns} of the conversation. Do NOT provide a final diagnostic verdict yet "
-                        "(do not output '**Disease**:', '**Severity**:', or '**Recommended Precautions**:') unless there is a severe/life-threatening emergency. "
-                        "Instead, ask 1 or 2 relevant, empathetic, and brief follow-up questions to understand their symptoms better.]"
+                        f"\n\n[System Instructions (STRICT RULE): This is turn {user_turns} of the conversation. Do NOT provide a final diagnostic verdict yet "
+                        "(do not output '**Disease**:', '**Severity**:', or '**Recommended Precautions**:') unless there is a severe emergency. "
+                        "Be extremely concise (maximum 15-20 words). Write no preamble or explanations. Ask only 1 or 2 brief, direct clarifying questions immediately.]"
                     )
             else:
                 turn_instruction = (
-                    f"\n\n[System Instructions: This is turn {user_turns}. You must now provide your final clinical assessment and diagnostic verdict. "
-                    "Strictly follow the formatting rules: include '**Disease**:', '**Severity**:', '**Recommended Precautions**:', and the medical disclaimer.]"
+                    f"\n\n[System Instructions (STRICT RULE): This is turn {user_turns}. You must now provide your final diagnostic verdict. "
+                    "Do not write any conversational preamble or explanations. Output the structured keys directly: "
+                    "'**Disease**:', '**Severity**:', '**Recommended Precautions**:', and the medical disclaimer.]"
                 )
         
         messages = [{"role": "system", "content": system_prompt}]

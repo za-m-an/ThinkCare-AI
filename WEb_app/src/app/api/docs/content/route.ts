@@ -159,7 +159,7 @@ const DEFAULT_CONTENT: Record<string, unknown> = {
       {
         name: "Kamruzzaman Chowdhury",
         role: "Team Lead & Full-Stack Engineer",
-        email: "kamruzzaman@thinkcare.ai",
+        email: "kamruzzaman@thinkings.tech",
         phone: "+880 01329602758",
         avatar: "/team_kamruzzaman.png",
         badge: "Team Lead",
@@ -167,7 +167,7 @@ const DEFAULT_CONTENT: Record<string, unknown> = {
       {
         name: "Noor Mohammed Taief",
         role: "AI/ML Engineer",
-        email: "taief@thinkcare.ai",
+        email: "taief@thinkings.tech",
         phone: "+880 01608849699",
         avatar: "/team_taief.png",
         badge: "Member",
@@ -175,7 +175,7 @@ const DEFAULT_CONTENT: Record<string, unknown> = {
       {
         name: "Irtisum Abtahi Rahman",
         role: "Backend & Systems Engineer",
-        email: "irtisum@thinkcare.ai",
+        email: "irtisum@thinkings.tech",
         phone: "+880 01819119930",
         avatar: "/team_irtisum.png",
         badge: "Member",

@@ -167,7 +167,7 @@ def parse_slm_response(text: str) -> dict:
     }
     
     # Match Disease name (English & Bangla)
-    disease_match = re.search(r"\*\*(?:Disease|রোগ)\*\*:\s*([^\n]+)", text, re.IGNORECASE)
+    disease_match = re.search(r"(?:\*\*?|১\)\s*|১\.\s*)(?:Disease|রোগ|সম্ভাব্য রোগ|অবস্থা|সবচেয়ে সম্ভাব্য রোগ/অবস্থা)\*\*?:\s*([^\n]+)", text, re.IGNORECASE)
     if disease_match:
         condition = disease_match.group(1).strip()
         parsed["top_condition"] = condition
@@ -176,19 +176,19 @@ def parse_slm_response(text: str) -> dict:
         parsed["verdict_given"] = True
         
     # Match Severity (English & Bangla)
-    severity_match = re.search(r"\*\*(?:Severity|তীব্রতা)\*\*:\s*([^\n]+)", text, re.IGNORECASE)
+    severity_match = re.search(r"(?:\*\*?|২\)\s*|২\.\s*)(?:Severity|তীব্রতা|তীব্রতার মাত্রা)\*\*?:\s*([^\n]+)", text, re.IGNORECASE)
     if severity_match:
         severity_val = severity_match.group(1).strip()
         parsed["aftermaths"] = f"Severity Level: {severity_val}"
         
     # Match Precautions list
-    prec_section = re.search(r"\*\*(?:Recommended Precautions|সুপারিশকৃত সতর্কতা)\*\*:\s*\n((?:[১-৯1-9]\.\s*[^\n]+\n?)+)", text, re.IGNORECASE)
+    prec_section = re.search(r"(?:\*\*?|৩\)\s*|৩\.\s*)(?:Recommended Precautions|সুপারিশকৃত সতর্কতা|সতর্কতা|প্রয়োজনীয় সতর্কতা)\*\*?:\s*\n?((?:[১-৯১-৯0-9*•-]\s*[^\n]+\n?)+)", text, re.IGNORECASE)
     if prec_section:
-        items = re.findall(r"(?:[১-৯1-9]\.\s*)([^\n]+)", prec_section.group(1))
+        items = re.findall(r"(?:[১-৯১-৯0-9*•-]\.\s*|[১-৯১-৯0-9*•-]\s*)([^\n]+)", prec_section.group(1))
         parsed["precautions"] = [item.strip() for item in items if item.strip()]
     else:
         # Fallback list match
-        items = re.findall(r"(?:\n[১-৯1-9]\.\s*)([^\n]+)", text)
+        items = re.findall(r"(?:\n[১-৯১-৯0-9*•-]\.\s*|\n[১-৯১-৯0-9*•-]\s*)([^\n]+)", text)
         if items:
             parsed["precautions"] = [item.strip() for item in items if item.strip()]
             

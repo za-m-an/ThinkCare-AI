@@ -2,14 +2,16 @@
 
 import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
-import { User, ShieldAlert, Key, Bell, Loader2, ShieldCheck, Globe } from "lucide-react";
+import { User, ShieldAlert, Key, Bell, Loader2, ShieldCheck, Globe, Sun, Moon } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function DesktopSettingsPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeSubTab, setActiveSubTab] = useState("profile");
   const { language, setLanguage, t } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
 
   // Profile Form States
   const [fullName, setFullName] = useState("");
@@ -215,6 +217,7 @@ export default function DesktopSettingsPage() {
     { id: "security", name: t("settings", "securityAccess"), icon: Key },
     { id: "notifications", name: t("settings", "notificationsTab"), icon: Bell },
     { id: "language", name: t("settings", "languageTab"), icon: Globe },
+    { id: "appearance", name: t("settings", "themeTab"), icon: Sun },
   ];
 
   return (
@@ -594,6 +597,69 @@ export default function DesktopSettingsPage() {
                         )}
                       </div>
                       <p className="text-xs text-slate-400 mt-2">{t("settings", "banglaDesc")}</p>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeSubTab === "appearance" && (
+              <div className="bg-[#131824] rounded-2xl border border-[#1e293b] p-6 space-y-6">
+                <div className="flex items-center gap-2 text-blue-400 border-b border-[#1e293b]/50 pb-2">
+                  <Sun className="h-5 w-5" />
+                  <span className="font-bold text-sm uppercase tracking-wider">{t("settings", "themeTitle")}</span>
+                </div>
+
+                <div className="space-y-4">
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    {t("settings", "themeDesc")}
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Light Mode Option */}
+                    <button
+                      onClick={() => theme !== "light" && toggleTheme()}
+                      className={`flex flex-col items-start text-left p-5 rounded-2xl border transition-all ${
+                        theme === "light"
+                          ? "bg-blue-500/10 border-blue-500"
+                          : "bg-[#0c101b] border-[#2e3e56] hover:border-blue-400/50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span className="font-bold text-sm text-slate-200 flex items-center gap-1.5">
+                          <Sun className="h-4.5 w-4.5 text-amber-400" />
+                          {t("settings", "lightMode")}
+                        </span>
+                        {theme === "light" && (
+                          <span className="text-[10px] bg-blue-500 text-white font-extrabold px-2 py-0.5 rounded-full uppercase">
+                            {t("settings", "currentLanguage")}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-400 mt-2">{t("settings", "lightModeDesc")}</p>
+                    </button>
+
+                    {/* Dark Mode Option */}
+                    <button
+                      onClick={() => theme !== "dark" && toggleTheme()}
+                      className={`flex flex-col items-start text-left p-5 rounded-2xl border transition-all ${
+                        theme === "dark"
+                          ? "bg-blue-500/10 border-blue-500"
+                          : "bg-[#0c101b] border-[#2e3e56] hover:border-blue-400/50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span className="font-bold text-sm text-slate-200 flex items-center gap-1.5">
+                          <Moon className="h-4.5 w-4.5 text-indigo-400" />
+                          {t("settings", "darkMode")}
+                        </span>
+                        {theme === "dark" && (
+                          <span className="text-[10px] bg-blue-500 text-white font-extrabold px-2 py-0.5 rounded-full uppercase">
+                            {t("settings", "currentLanguage")}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-400 mt-2">{t("settings", "darkModeDesc")}</p>
                     </button>
                   </div>
                 </div>

@@ -16,9 +16,12 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Globe,
-  BookOpen
+  BookOpen,
+  Sun,
+  Moon
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface SidebarProps {
   activeTab?: string;
@@ -31,6 +34,7 @@ export default function Sidebar({ activeTab, userRole = "USER" }: SidebarProps) 
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { language, setLanguage, t } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const stored = localStorage.getItem("sidebar-collapsed");
@@ -186,15 +190,32 @@ export default function Sidebar({ activeTab, userRole = "USER" }: SidebarProps) 
             })}
         </nav>
 
-        {/* Language Toggle + Footer */}
-        <div className="px-4 pb-2">
+        {/* Language & Theme Switchers */}
+        <div className="px-4 pb-2 flex gap-2">
           <button
             onClick={() => setLanguage(language === "en" ? "bn" : "en")}
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl border border-[#2e3e56] hover:border-blue-400/50 text-slate-400 hover:text-blue-400 text-[11px] font-bold transition-all cursor-pointer bg-[#0c101b]/50 hover:bg-[#131824]"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border border-[#2e3e56] hover:border-blue-400/50 text-slate-400 hover:text-blue-400 text-[10px] font-bold transition-all cursor-pointer bg-[#0c101b]/50 hover:bg-[#131824]"
             title={language === "en" ? "Switch to Bangla" : "Switch to English"}
           >
             <Globe className="h-3.5 w-3.5" />
             {language === "en" ? "বাংলা" : "English"}
+          </button>
+          <button
+            onClick={toggleTheme}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border border-[#2e3e56] hover:border-blue-400/50 text-slate-400 hover:text-blue-400 text-[10px] font-bold transition-all cursor-pointer bg-[#0c101b]/50 hover:bg-[#131824]"
+            title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
+            {theme === "dark" ? (
+              <>
+                <Sun className="h-3.5 w-3.5 text-amber-400" />
+                <span>Light</span>
+              </>
+            ) : (
+              <>
+                <Moon className="h-3.5 w-3.5 text-indigo-400" />
+                <span>Dark</span>
+              </>
+            )}
           </button>
         </div>
 

@@ -3,14 +3,16 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import MobileNavBar from "@/components/MobileNavBar";
-import { User, ShieldAlert, Key, Bell, Loader2, ShieldCheck, ChevronDown, ChevronUp, Globe } from "lucide-react";
+import { User, ShieldAlert, Key, Bell, Loader2, ShieldCheck, ChevronDown, ChevronUp, Globe, Sun, Moon } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function MobileSettingsPage() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { language, setLanguage, t } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
 
   // Collapsible sections
   const [expandedSection, setExpandedSection] = useState<string | null>("profile");
@@ -590,6 +592,80 @@ export default function MobileSettingsPage() {
                     )}
                   </div>
                   <p className="text-[10px] text-slate-500 mt-1">{t("settings", "banglaDesc")}</p>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Appearance Section */}
+        <div className="bg-[#131824] border-y border-[#1e293b] overflow-hidden mt-3">
+          <button
+            onClick={() => setExpandedSection(expandedSection === "appearance" ? null : "appearance")}
+            className="w-full flex items-center justify-between px-5 py-4 text-left cursor-pointer"
+          >
+            <div className="flex items-center gap-3">
+              <Sun className="h-5 w-5 text-blue-400" />
+              <span className="font-bold text-xs uppercase tracking-wider text-slate-200">{t("settings", "themeTab")}</span>
+            </div>
+            {expandedSection === "appearance" ? (
+              <ChevronUp className="h-4.5 w-4.5 text-slate-400" />
+            ) : (
+              <ChevronDown className="h-4.5 w-4.5 text-slate-400" />
+            )}
+          </button>
+
+          {expandedSection === "appearance" && (
+            <div className="p-4 space-y-4 animate-in fade-in">
+              <p className="text-[10px] text-slate-500 leading-relaxed font-sans">
+                {t("settings", "themeDesc")}
+              </p>
+
+              <div className="space-y-3">
+                {/* Light Option */}
+                <button
+                  onClick={() => theme !== "light" && toggleTheme()}
+                  className={`w-full flex flex-col items-start text-left p-4 rounded-xl border transition-all ${
+                    theme === "light"
+                      ? "bg-blue-500/10 border-blue-500"
+                      : "bg-[#0c101b] border-[#2e3e56]"
+                  }`}
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <span className="font-bold text-xs text-slate-200 flex items-center gap-1.5">
+                      <Sun className="h-4 w-4 text-amber-400" />
+                      {t("settings", "lightMode")}
+                    </span>
+                    {theme === "light" && (
+                      <span className="text-[9px] bg-blue-500 text-white font-extrabold px-2 py-0.5 rounded-full uppercase">
+                        {t("settings", "currentLanguage")}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">{t("settings", "lightModeDesc")}</p>
+                </button>
+
+                {/* Dark Option */}
+                <button
+                  onClick={() => theme !== "dark" && toggleTheme()}
+                  className={`w-full flex flex-col items-start text-left p-4 rounded-xl border transition-all ${
+                    theme === "dark"
+                      ? "bg-blue-500/10 border-blue-500"
+                      : "bg-[#0c101b] border-[#2e3e56]"
+                  }`}
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <span className="font-bold text-xs text-slate-200 flex items-center gap-1.5">
+                      <Moon className="h-4 w-4 text-indigo-400" />
+                      {t("settings", "darkMode")}
+                    </span>
+                    {theme === "dark" && (
+                      <span className="text-[9px] bg-blue-500 text-white font-extrabold px-2 py-0.5 rounded-full uppercase">
+                        {t("settings", "currentLanguage")}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">{t("settings", "darkModeDesc")}</p>
                 </button>
               </div>
             </div>

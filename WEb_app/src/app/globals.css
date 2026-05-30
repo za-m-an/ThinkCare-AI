@@ -46,3 +46,133 @@ body {
   background: #334155;
 }
 
+/* ==========================================
+   🌤️ LIGHT MODE SKY BLUE OVERRIDES
+   ========================================== */
+html.light {
+  --background: #f0f9ff; /* Sky 50 background */
+  --foreground: #0f172a; /* Slate 900 */
+}
+
+html.light body {
+  background-color: #f0f9ff !important;
+  color: #0f172a !important;
+}
+
+/* Scrollbar in Light Mode */
+html.light ::-webkit-scrollbar-track {
+  background: #f0f9ff;
+}
+html.light ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Background overrides: Replace deep dark '#0c101b' with soft sky blue '#f0f9ff' */
+html.light [class*="bg-[#0c101b]"] {
+  background-color: #f0f9ff !important;
+}
+
+/* Header overlays or semi-transparent backgrounds */
+html.light [class*="bg-[#0c101b]/95"] {
+  background-color: rgba(240, 249, 255, 0.95) !important;
+}
+html.light [class*="bg-[#0c101b]/50"] {
+  background-color: rgba(224, 242, 254, 0.5) !important; /* Sky 100 opacity */
+}
+
+/* Card backgrounds: Replace '#131824' and '#181c2a' with pure white */
+html.light [class*="bg-[#131824]"],
+html.light [class*="bg-[#181c2a]"] {
+  background-color: #ffffff !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05); /* Premium soft shadow */
+}
+
+/* Other dark sections and panels */
+html.light [class*="bg-slate-900/40"],
+html.light [class*="bg-[#151b2c]"] {
+  background-color: #f1f5f9 !important;
+}
+
+html.light [class*="bg-[#111625]"] {
+  background-color: #e2e8f0 !important;
+}
+
+html.light [class*="bg-slate-950/20"] {
+  background-color: rgba(226, 232, 240, 0.6) !important;
+}
+
+/* Border overrides: Replace dark borders with soft sky-blue borders */
+html.light [class*="border-[#1e293b]"],
+html.light [class*="border-[#2e3e56]"] {
+  border-color: #bae6fd !important; /* Sky 200 border */
+}
+
+/* Form inputs, textareas, and select elements */
+html.light input,
+html.light select,
+html.light textarea {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+  border-color: #bae6fd !important;
+}
+
+html.light input::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Text overrides: Convert white text to dark Slate 900 */
+html.light .text-white,
+html.light [class*="text-slate-100"],
+html.light [class*="text-slate-200"],
+html.light [class*="text-white/"] {
+  color: #0f172a !important;
+}
+
+html.light [class*="text-slate-300"],
+html.light [class*="text-slate-400"] {
+  color: #334155 !important; /* Slate 700 */
+}
+
+html.light [class*="text-slate-500"],
+html.light [class*="text-[#64748b]"] {
+  color: #64748b !important; /* Muted slate */
+}
+
+/* Blue accents and text highlights: shift from light blue to solid Sky 600 */
+html.light [class*="text-[#9cbbf8]"] {
+  color: #0284c7 !important; /* Vibrant Sky 600 */
+}
+
+html.light [class*="border-blue-500"] {
+  border-color: #0284c7 !important;
+}
+
+html.light [class*="text-blue-400"] {
+  color: #0284c7 !important;
+}
+
+html.light [class*="bg-blue-500"] {
+  background-color: #0284c7 !important;
+}
+
+html.light [class*="hover:bg-blue-600"]:hover {
+  background-color: #0369a1 !important; /* Sky 700 on hover */
+}
+
+html.light [class*="hover:text-slate-200"]:hover {
+  color: #0f172a !important;
+}
+
+html.light [class*="hover:bg-slate-900/40"]:hover {
+  background-color: #e0f2fe !important; /* Soft sky hover highlight */
+}
+
+/* Chart text labels */
+html.light text {
+  fill: #475569 !important;
+}
+
+

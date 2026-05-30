@@ -304,6 +304,14 @@ export const translations: TranslationMap = {
     englishDesc: { en: "Use English for the entire interface", bn: "সমগ্র ইন্টারফেসের জন্য ইংরেজি ব্যবহার করুন" },
     banglaDesc: { en: "Use Bangla for the entire interface", bn: "সমগ্র ইন্টারফেসের জন্য বাংলা ব্যবহার করুন" },
     currentLanguage: { en: "Current", bn: "বর্তমান" },
+    // Theme Settings
+    themeTab: { en: "Appearance", bn: "চেহারা" },
+    themeTitle: { en: "Theme Preference", bn: "থিম পছন্দ" },
+    themeDesc: { en: "Choose between light and dark modes for the interface.", bn: "ইন্টারফেসের জন্য হালকা এবং অন্ধকার মোডের মধ্যে বেছে নিন।" },
+    lightMode: { en: "Light Mode (Sky Blue)", bn: "হালকা মোড (আকাশি নীল)" },
+    darkMode: { en: "Dark Mode (Deep Blue)", bn: "অন্ধকার মোড (গাঢ় নীল)" },
+    lightModeDesc: { en: "Clean interface using soft sky blue colors", bn: "নরম আকাশি নীল রঙের পরিষ্কার ইন্টারফেস" },
+    darkModeDesc: { en: "Classic interface using clinical deep dark colors", bn: "ক্লিনিক্যাল গভীর অন্ধকার রঙের ক্লাসিক ইন্টারফেস" },
   },
 
   // ═══════════════════════════════════════════════

@@ -180,6 +180,22 @@ const DEFAULT_CONTENT: Record<string, unknown> = {
         avatar: "/team_irtisum.png",
         badge: "Member",
       },
+      {
+        name: "Snigdha Biswas",
+        role: "Quality Assurance & UI Engineer",
+        email: "snigdha@thinkings.tech",
+        phone: "+880 01789575476",
+        avatar: "",
+        badge: "Member",
+      },
+      {
+        name: "Arafath Mutaffir",
+        role: "Frontend & Mobile Developer",
+        email: "arafath@thinkings.tech",
+        phone: "+82 01096299572",
+        avatar: "",
+        badge: "Member",
+      },
     ],
   },
   changelog: {
